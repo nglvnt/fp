@@ -14,3 +14,8 @@ instance Show Board where
 -- initial board consists of 9 × 9 = 81 open cells, each with no values in it
 emptyBoard :: Board
 emptyBoard = Board (replicate 81 Nothing)
+
+updateBoard :: Int -> (Int, Int) -> Board -> Board
+updateBoard value (r, c) (Board cells) = Board (xs ++ [Just value] ++ ys) where
+    index = 9 * r + c
+    (xs, y:ys) = splitAt index cells

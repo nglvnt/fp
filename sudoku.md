@@ -69,3 +69,46 @@ Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 ```
+
+### Adding a value to a cell
+
+The empty board is not too interesting, we have to start filling it with numbers. The only complication is the one we have already observed: it is more natural and easy to use (row, column) coordinates when referring to a cell, than using a flat index. We assume that that row and column coordinates start at 0, just like list indices, this makes the coordinate-to-index conversion a bit easier (otherwise we would have to subtract 1 from the coordinates).Also, the fact that `splitAt` works is kind of magical, I had to check for both edge cases, the first and last element of the board, that `updateBoard` really does what it should.
+
+```haskell
+updateBoard :: Int -> (Int, Int) -> Board -> Board
+updateBoard value (r, c) (Board cells) = Board (xs ++ [Just value] ++ ys) where
+    index = 9 * r + c
+    (xs, y:ys) = splitAt index cells
+```
+
+What improvement opportunities can we note down?
+
+* the coordinate-index conversion that has been already commented,
+* row and column coordinates defined as `Int`s, though they could take just a restricted set of values,
+* the `(xs, y:ys) = splitAt index cells` part is hard to follow,
+* `Just n` has length 6, one less than `Nothing`, causing the discrepancy in the displayed board.
+
+```shell
+ghci> updateBoard 1 (0, 0) emptyBoard
+Just 1 Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+
+ghci> updateBoard 1 (8, 8) emptyBoard
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Just 1
+
+```
