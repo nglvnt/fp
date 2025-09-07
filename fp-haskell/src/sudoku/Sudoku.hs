@@ -1,7 +1,22 @@
 module Sudoku where
 
 -- a cell can be either filled with a given number or empty with the list of potential values
-data Cell = Empty [Int] | Filled Int deriving Show
+data Cell = Empty [Int] | Filled Int
+
+wsCenter :: Int -> String -> String
+wsCenter n s
+    | len >= n  = s
+    | otherwise = (replicate l ' ') ++ s ++ (replicate r ' ')
+    where
+        len = length s
+        d   = n - len
+        r   = d `quot` 2
+        l   = d - r
+
+instance Show Cell where
+    show (Empty ps) = wsCenter 11 $ "[" ++ concatMap show ps ++ "]"
+    show (Filled val) = wsCenter 11 $ show val
+    
 
 -- a board is a list of cells
 newtype Board = Board [Cell]
