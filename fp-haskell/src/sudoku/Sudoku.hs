@@ -1,5 +1,7 @@
 module Sudoku where
 
+import Data.List (delete)
+
 -- a cell can be either filled with a given number or empty with the list of potential values
 data Cell = Empty [Int] | Filled Int
 
@@ -30,7 +32,21 @@ instance Show Board where
 emptyBoard :: Board
 emptyBoard = Board (replicate 81 (Empty [1..9]))
 
+sameCell :: (Int, Int) -> (Int, Int) -> Bool
+sameCell (r, c) (r', c') = (r' == r) && (c' == c)
+
+sameUnit :: (Int, Int) -> (Int, Int) -> Bool
+sameUnit (r, c) (r', c') = (r' == r) || (c' == c) || ((div r' 3 == div r 3) && (div c' 3 == div c 3))
+
 updateBoard :: Int -> (Int, Int) -> Board -> Board
-updateBoard value (r, c) (Board cells) = Board (xs ++ [Filled value] ++ ys) where
-    index = 9 * r + c
-    (xs, y:ys) = splitAt index cells
+updateBoard value (r, c) (Board cells) = Board $ map (updateCell value (r, c)) (zip [0..] cells) where
+    updateCell :: Int -> (Int, Int) -> (Int, Cell) -> Cell
+    updateCell value (r, c) (index, cell)
+        | sameCell (r, c) (r', c') = Filled value
+        | sameUnit (r, c) (r', c') = case cell of
+            (Filled value') -> Filled value'
+            (Empty ps) -> Empty (delete value ps)
+        | otherwise = cell
+        where
+            r' = div index 9
+            c' = mod index 9

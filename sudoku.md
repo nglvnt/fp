@@ -280,3 +280,58 @@ ghci> updateBoard 1 (0, 0) emptyBoard
 ```
 
 Much better!(?)
+
+### Updating the potential values
+
+Let's move on to `updateBoard`! What we need is that when we fill a cell with a value, we also remove that value from the list of potential values from all the other cells in the same row/column/3×3 subsquare.
+
+How de we find the other cells in the same row/column/3×3 subsquare? In `(row, column)` coordinate form, it is easy to tell if two cells are in the same row or column: same value in the first or second coordinate. Regarding the 3×3 subsquare, we might integer-divide the coordinates by 3, and check if we get the same pair as a result.
+
+```haskell
+sameCell :: (Int, Int) -> (Int, Int) -> Bool
+sameCell (r, c) (r', c') = (r' == r) && (c' == c)
+
+sameUnit :: (Int, Int) -> (Int, Int) -> Bool
+sameUnit (r, c) (r', c') = (r' == r) || (c' == c) || ((div r' 3 == div r 3) && (div c' 3 == div c 3))
+```
+
+Modified `updateBoard` will do the following: it will go though all the cells of the board, check if a cell is
+
+* the one that we target with our update, then we make it filled with the value,
+* or in the same row/column/3×3 subsquare of the target cell, then we update the list of potential values if it is an empty cell or leave as it is if filled,
+* or leave as it is.
+
+The lack of coordinates in a cell means that we have to keep track the index (`zip [0..] cells`) and then convert the index to coordinate (`r' = div index 9` and `c' = mode index 9`), not an ideal solution.
+
+We also do not check if the target cell is already a filled cell, just overwrite it in any case with a filled cell. What should we do in this case?
+
+```haskell
+updateBoard :: Int -> (Int, Int) -> Board -> Board
+updateBoard value (r, c) (Board cells) = Board $ map (updateCell value (r, c)) (zip [0..] cells) where
+    updateCell :: Int -> (Int, Int) -> (Int, Cell) -> Cell
+    updateCell value (r, c) (index, cell)
+        | sameCell (r, c) (r', c') = Filled value
+        | sameUnit (r, c) (r', c') = case cell of
+            (Filled value') -> Filled value'
+            (Empty ps) -> Empty (delete value ps)
+        | otherwise = cell
+        where
+            r' = div index 9
+            c' = mod index 9
+```
+
+Let's see how it works.
+
+```shell
+ghci> updateBoard 1 (0, 0) emptyBoard
+     1       [23456789]  [23456789]  [23456789]  [23456789]  [23456789]  [23456789]  [23456789]  [23456789]
+ [23456789]  [23456789]  [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+ [23456789]  [23456789]  [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+ [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+ [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+ [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+ [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+ [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+ [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
+
+```
