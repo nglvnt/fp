@@ -112,3 +112,69 @@ Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Just 1
 
 ```
+
+### Calculating the next move
+
+Now that we have a way to fill the cells of a board, we can start working on how to determine what should be the next value to be added to the board. The most basic thing we can do is to go through the cells, and for each cell we check the existing values in other cells in the same row, column, or 3 × 3 subsquare, and determine what are the remaining possible values for the cell. If there is only one possibility, then we fill the cell with that value, and iterate this process.
+
+However, this constant recalculation feels wasteful, maybe we can utilise the cells to keep track their possible vales while filling up the board. For this, let's look at the definition of a cell:
+
+```haskell
+type Cell = Maybe Int
+```
+
+Equivalently and explicitly:
+
+```haskell
+type Cell = Nothing | Just Int
+```
+
+A cell can be either filled with a given value, the `Just Int` part, or can be empty (the `Nothing` part), and in this case, the information content of the cell is its collection of potential values. This suggests the following modification:
+
+```haskell
+data Cell = Empty [Int] | Filled Int
+```
+
+After this change, we immediately get type errors in the emptyBoard and updateBoard definitions and let's address them. And after that we get that there is no `Show` instance defined for our new `Cell`, let's do that by simply deriving `Show`.
+
+```haskell
+data Cell = Empty [Int] | Filled Int deriving Show
+
+...
+
+emptyBoard :: Board
+emptyBoard = Board (replicate 81 (Empty [1..9]))
+
+updateBoard :: Int -> (Int, Int) -> Board -> Board
+updateBoard value (r, c) (Board cells) = Board (xs ++ [Filled value] ++ ys) where
+    index = 9 * r + c
+    (xs, y:ys) = splitAt index cells
+```
+
+Reload the module, and check `emptyBoard` and `updateBoard`.
+
+```shell
+ghci> emptyBoard
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+
+ghci> updateBoard 1 (0, 0) emptyBoard
+Filled 1 Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9] Empty [1,2,3,4,5,6,7,8,9]
+```
+
+We have two problems now: the display looks bad, and `updateBoard` just fills up the value in a cell, does not modify the potential values in other cells.
