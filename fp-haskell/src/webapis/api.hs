@@ -10,6 +10,9 @@ import Network.Wai.Handler.Warp (run)
 newtype Message = Message {message :: Text} deriving (Show, Generic)
 instance ToJSON Message
 
+newtype Item = Item {itemId :: Text} deriving (Show, Generic)
+instance ToJSON Item
+
 -- run server
 main :: IO ()
 main = do
@@ -18,8 +21,9 @@ main = do
 
 -- application 
 app :: Application
-app request respond = respond $ case (requestMethod request, rawPathInfo request) of
-    ("GET", "/") -> root
+app request respond = respond $ case (requestMethod request, pathInfo request) of
+    ("GET", []) -> root
+    ("GET", ["item", itemId]) -> getItem itemId
 
 -- get root function
 root :: Response
@@ -27,3 +31,10 @@ root = responseLBS
     status200
     [(hContentType, "application/json")]
     (encode Message {message = "Hello World!"})
+
+-- get item by ID
+getItem :: Text -> Response
+getItem item = responseLBS
+    status200
+    [(hContentType, "application/json")]
+    (encode Item {itemId = item})
