@@ -1,7 +1,14 @@
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+import Data.Aeson
+import Data.Text
+import GHC.Generics
 import Network.HTTP.Types
 import Network.Wai
 import Network.Wai.Handler.Warp (run)
+
+newtype Message = Message {message :: Text} deriving (Show, Generic)
+instance ToJSON Message
 
 -- run server
 main :: IO ()
@@ -12,11 +19,11 @@ main = do
 -- application 
 app :: Application
 app request respond = respond $ case (requestMethod request, rawPathInfo request) of
-        ("GET", "/") -> root
+    ("GET", "/") -> root
 
 -- get root function
 root :: Response
 root = responseLBS
     status200
-    [(hContentType, "text/plain")]
-    "Hello World!"
+    [(hContentType, "application/json")]
+    (encode Message {message = "Hello World!"})
