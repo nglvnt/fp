@@ -51,6 +51,9 @@ updateBoard value (r, c) (Board cells) = Board $ map (updateCell value (r, c)) (
             r' = div index 9
             c' = mod index 9
 
+updateBoardMany :: [(Int, (Int, Int))] -> Board -> Board
+updateBoardMany xs board = foldl (\b (v, c) -> updateBoard v c b) board xs
+
 firstExampleInput = [
     (1, (0, 2)), (9, (0, 3)), (6, (0, 5)), (5, (0, 8)),
     (7, (1, 4)), (1, (1, 8)),
@@ -64,3 +67,11 @@ firstExampleInput = [
     ] :: [(Int, (Int, Int))]
 
 firstExampleStartBoard = foldl (\b (v, c) -> updateBoard v c b) emptyBoard firstExampleInput
+
+findSinglePossibilities :: Board -> [(Int, (Int, Int))]
+findSinglePossibilities (Board cells) = do
+    (index, cell) <- zip [0..] cells
+    case cell of
+        Filled _ -> []
+        Empty [value] -> [(value, (div index 9, mod index 9))]
+        Empty _ -> []

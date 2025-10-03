@@ -380,3 +380,46 @@ ghci> firstExampleStartBoard
      9         [168]         5           3           4         [127]       [268]       [268]        [78]   
    [1468]     [13468]       [36]        [1]        [129]       [1279]      [268]         5         [478]
 ```
+
+### Filling single-possibility cells
+
+Checking the empty cells with the list of possibilities, we see that there are cells with single possible value, hence a first, natural solution strategy could be that we fill these cells. We need a function to find these cells, and extract the value-coordinate pairs from them, and then we just simply fold through them to update the board.
+
+To get the coordinates, we enumerate the cells, and use integer division and remainder to convert the cell index to the coordinate, not an ideal solution, but works for now.
+
+```haskell
+findSinglePossibilities :: Board -> [(Int, (Int, Int))]
+findSinglePossibilities (Board cells) = do
+    (index, cell) <- zip [0..] cells
+    case cell of
+        Filled _ -> []
+        Empty [value] -> [(value, (div index 9, mod index 9))]
+        Empty _ -> []
+```
+
+```shell
+ghci> findSinglePossibilities firstExampleStartBoard
+[(2,(0,4)),(6,(1,2)),(1,(3,0)),(9,(3,8)),(4,(6,0)),(5,(6,3)),(1,(8,3))]
+```
+
+As it will be used many times, we define the following generalization of `updateBoard` to a list of value-coordinate pairs.
+
+```haskell
+updateBoardMany :: [(Int, (Int, Int))] -> Board -> Board
+updateBoardMany xs board = foldl (\b (v, c) -> updateBoard v c b) board xs
+```
+
+With this, a step towards solution can be written as
+
+```shell
+ghci> updateBoardMany (findSinglePossibilities firstExampleStartBoard) firstExampleStartBoard
+    [8]        [478]         1           9           2           6          [38]        [48]         5     
+    [28]       [458]         6          [4]          7         [345]       [238]       [2489]        1     
+     3          [45]         9           8          [15]       [145]         7          [24]         6     
+     1          [3]          2           6           8          [5]          4           7           9     
+     7          [69]         4           2         [159]       [159]       [568]         3          [8]    
+     5          [69]         8           7           3          [49]         1          [6]          2     
+     4           2           7           5           6           8           9           1           3     
+     9         [168]         5           3           4          [27]       [268]       [268]        [78]   
+    [68]       [368]        [3]          1          [9]        [279]       [268]         5         [478]
+```
