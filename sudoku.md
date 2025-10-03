@@ -335,3 +335,48 @@ ghci> updateBoard 1 (0, 0) emptyBoard
  [23456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789] [123456789]
 
 ```
+
+## Solving the first Sudoku puzzle
+
+So far we concentrated on managing the board, now we can turn our attention to actually solving a Sudoku puzzle.
+
+### An easy example
+
+To solve a Sudoku, first we need an actual Sudoku puzzle. The initial state of a Sudoku board can be described by value-coordinate pairs, giving us the initial values at the given coordinates. We can put these value-coordinate pairs into a list, and use `updateBoard` to build up the initial Sudoku board.
+
+The first example will be an easy one, with 38 numbers already given, the board is almost 50% filled.
+
+```haskell
+firstExampleInput = [
+    (1, (0, 2)), (9, (0, 3)), (6, (0, 5)), (5, (0, 8)),
+    (7, (1, 4)), (1, (1, 8)),
+    (3, (2, 0)), (9, (2, 2)), (8, (2, 3)), (7, (2, 6)), (6, (2, 8)),
+    (2, (3, 2)), (6, (3, 3)), (8, (3, 4)), (4, (3, 6)), (7, (3, 7)),
+    (7, (4, 0)), (4, (4, 2)), (2, (4, 3)), (3, (4, 7)),
+    (5, (5, 0)), (8, (5, 2)), (7, (5, 3)), (3, (5, 4)), (1, (5, 6)), (2, (5, 8)),
+    (2, (6, 1)), (7, (6, 2)), (6, (6, 4)), (8, (6, 5)), (9, (6, 6)), (1, (6, 7)), (3, (6, 8)),
+    (9, (7, 0)), (5, (7, 2)), (3, (7, 3)), (4, (7, 4)),
+    (5, (8, 7))
+    ] :: [(Int, (Int, Int))]
+```
+
+Given this input list, we can fold through this list, updating the board with the value in the coordinate, and then passing the result board to the next `updateBoard` iteration.
+
+```haskell
+firstExampleStartBoard = foldl (\b (v, c) -> updateBoard v c b) emptyBoard firstExampleInput
+```
+
+The initial state is the following.
+
+```shell
+ghci> firstExampleStartBoard
+   [248]       [478]         1           9          [2]          6         [238]       [248]         5     
+   [2468]      [4568]       [6]         [45]         7         [2345]      [238]       [2489]        1     
+     3          [45]         9           8         [125]       [1245]        7          [24]         6     
+    [1]        [139]         2           6           8         [159]         4           7          [9]    
+     7         [169]         4           2         [159]       [159]       [568]         3          [89]   
+     5          [69]         8           7           3          [49]         1          [69]         2     
+    [4]          2           7          [5]          6           8           9           1           3     
+     9         [168]         5           3           4         [127]       [268]       [268]        [78]   
+   [1468]     [13468]       [36]        [1]        [129]       [1279]      [268]         5         [478]
+```
