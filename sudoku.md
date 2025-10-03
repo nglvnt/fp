@@ -423,3 +423,75 @@ ghci> updateBoardMany (findSinglePossibilities firstExampleStartBoard) firstExam
      9         [168]         5           3           4          [27]       [268]       [268]        [78]   
     [68]       [368]        [3]          1          [9]        [279]       [268]         5         [478]
 ```
+
+### Solving the Sudoku iteratively
+
+To completely solve the Sudoku puzzle, we just iterate this procedure until the result of `findSinglePossibilities` is an empty list. This happens in two cases, either every cell of the board is filled, or all of the empty cells have multiple possible values. In the former case, the puzzle is solved, and we are happy! :) In the latter case, we are stuck in the process of solution, and we have to think more on how to solve the puzzle.
+
+```haskell
+solveSudoku :: Board -> Board
+solveSudoku board = case findSinglePossibilities board of
+    [] -> board
+    xs -> solveSudoku $ updateBoardMany xs board
+```
+
+Let's see what happens with the first example.
+
+```shell
+ghci> solveSudoku firstExampleStartBoard
+     8           7           1           9           2           6           3           4           5     
+     2           5           6           4           7           3           8           9           1     
+     3           4           9           8           5           1           7           2           6     
+     1           3           2           6           8           5           4           7           9     
+     7           6           4           2           1           9           5           3           8     
+     5           9           8           7           3           4           1           6           2     
+     4           2           7           5           6           8           9           1           3     
+     9           1           5           3           4           2           6           8           7     
+     6           8           3           1           9           7           2           5           4
+```
+
+We are lucky, the process did not get stuck and we got a complete solution for the puzzle.
+
+However, this is certainly not true in general, to see this, here is a second, a bit harder example with 30 numbers given initially.
+
+```haskell
+secondExampleInput = [
+    (7, (0, 2)), (3, (0, 4)), (4, (0, 6)), (6, (0, 8)),
+    (9, (1, 0)), (3, (1, 1)), (8, (1, 8)),
+    (8, (2, 0)), (2, (2, 1)), (1, (2, 3)), (9, (2, 4)), (7, (2, 6)),
+    (1, (3, 0)), (4, (3, 1)), (8, (3, 5)),
+    (2, (4, 4)), (8, (4, 7)), (5, (4, 8)),
+    (8, (5, 2)), (6, (5, 4)),
+    (6, (6, 1)), (9, (6, 3)), (8, (6, 4)), (5, (6, 6)),
+    (3, (7, 0)), (1, (7, 2)), (7, (7, 5)), (6, (7, 6)),
+    (9, (8, 2)), (1, (8, 4))
+    ] :: [(Int, (Int, Int))]
+
+secondExampleStartBoard = foldl (\b (v, c) -> updateBoard v c b) emptyBoard secondExampleInput
+```
+
+When we try to solve the second example, we can fill 6 cells, however after that we cannot proceed with our simple strategy.
+
+```shell
+ghci> secondExampleStartBoard
+    [5]         [15]         7         [258]         3          [25]         4         [1259]        6     
+     9           3         [456]      [24567]      [457]       [2456]       [12]       [125]         8     
+     8           2         [456]         1           9         [456]         7          [35]        [3]    
+     1           4         [2356]      [357]        [57]         8         [239]      [23679]      [2379]  
+    [67]        [79]        [36]       [347]         2         [1349]      [139]         8           5     
+   [257]       [579]         8         [3457]        6        [13459]      [1239]     [123479]    [123479] 
+   [247]         6          [24]         9           8         [234]         5        [12347]     [12347]  
+     3          [58]         1         [245]        [45]         7           6         [249]       [249]   
+   [2457]      [578]         9        [23456]        1        [23456]      [238]       [2347]      [2347]
+
+ghci> solveSudoku secondExampleStartBoard
+     5           1           7           8           3           2           4           9           6     
+     9           3          [46]       [4567]      [457]       [456]        [12]        [12]         8     
+     8           2          [46]         1           9          [46]         7           5           3     
+     1           4         [2356]      [357]        [57]         8         [239]       [2367]      [279]   
+    [67]        [79]        [36]       [347]         2         [1349]      [139]         8           5     
+    [27]       [579]         8         [3457]        6        [13459]      [1239]     [12347]     [12479]  
+   [247]         6          [24]         9           8          [34]         5        [12347]      [1247]  
+     3          [58]         1         [245]        [45]         7           6          [24]       [249]   
+   [247]       [578]         9        [23456]        1         [3456]      [238]       [2347]      [247]
+```

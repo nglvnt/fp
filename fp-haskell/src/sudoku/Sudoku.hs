@@ -54,6 +54,21 @@ updateBoard value (r, c) (Board cells) = Board $ map (updateCell value (r, c)) (
 updateBoardMany :: [(Int, (Int, Int))] -> Board -> Board
 updateBoardMany xs board = foldl (\b (v, c) -> updateBoard v c b) board xs
 
+findSinglePossibilities :: Board -> [(Int, (Int, Int))]
+findSinglePossibilities (Board cells) = do
+    (index, cell) <- zip [0..] cells
+    case cell of
+        Filled _ -> []
+        Empty [value] -> [(value, (div index 9, mod index 9))]
+        Empty _ -> []
+
+solveSudoku :: Board -> Board
+solveSudoku board = case findSinglePossibilities board of
+    [] -> board
+    xs -> solveSudoku $ updateBoardMany xs board
+
+-- examples
+
 firstExampleInput = [
     (1, (0, 2)), (9, (0, 3)), (6, (0, 5)), (5, (0, 8)),
     (7, (1, 4)), (1, (1, 8)),
@@ -68,10 +83,16 @@ firstExampleInput = [
 
 firstExampleStartBoard = foldl (\b (v, c) -> updateBoard v c b) emptyBoard firstExampleInput
 
-findSinglePossibilities :: Board -> [(Int, (Int, Int))]
-findSinglePossibilities (Board cells) = do
-    (index, cell) <- zip [0..] cells
-    case cell of
-        Filled _ -> []
-        Empty [value] -> [(value, (div index 9, mod index 9))]
-        Empty _ -> []
+secondExampleInput = [
+    (7, (0, 2)), (3, (0, 4)), (4, (0, 6)), (6, (0, 8)),
+    (9, (1, 0)), (3, (1, 1)), (8, (1, 8)),
+    (8, (2, 0)), (2, (2, 1)), (1, (2, 3)), (9, (2, 4)), (7, (2, 6)),
+    (1, (3, 0)), (4, (3, 1)), (8, (3, 5)),
+    (2, (4, 4)), (8, (4, 7)), (5, (4, 8)),
+    (8, (5, 2)), (6, (5, 4)),
+    (6, (6, 1)), (9, (6, 3)), (8, (6, 4)), (5, (6, 6)),
+    (3, (7, 0)), (1, (7, 2)), (7, (7, 5)), (6, (7, 6)),
+    (9, (8, 2)), (1, (8, 4))
+    ] :: [(Int, (Int, Int))]
+
+secondExampleStartBoard = foldl (\b (v, c) -> updateBoard v c b) emptyBoard secondExampleInput
